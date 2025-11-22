@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soundscape Ambiance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .videos-table {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .videos-table h3 {
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f1f5f9;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .video-link {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .video-link:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            padding: 50px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Soundscape Ambiance Dashboard</h1>
+            <p class="subtitle">YouTube Automation Analytics</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>System Active</span>
+            </div>
+            <div id="lastUpdated">Loading...</div>
+        </div>
+
+        <div id="loading" class="loading">Loading dashboard data...</div>
+
+        <div id="dashboard" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon">📹</div>
+                    <div class="label">Total Videos</div>
+                    <div class="value" id="totalVideos">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">👥</div>
+                    <div class="label">Subscribers</div>
+                    <div class="value" id="subscribers">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">👁️</div>
+                    <div class="label">Total Views</div>
+                    <div class="value" id="totalViews">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">📊</div>
+                    <div class="label">Avg Views/Video</div>
+                    <div class="value" id="avgViews">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">📅</div>
+                    <div class="label">Videos Today</div>
+                    <div class="value" id="videosToday">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">📆</div>
+                    <div class="label">Videos This Week</div>
+                    <div class="value" id="videosWeek">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">📈</div>
+                    <div class="label">Videos This Month</div>
+                    <div class="value" id="videosMonth">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="icon">🎯</div>
+                    <div class="label">Success Rate</div>
+                    <div class="value" id="successRate">100%</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3>📊 Top Music Channels</h3>
+                    <canvas id="creatorsChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>👁️ Top Videos by Views</h3>
+                    <canvas id="viewsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="videos-table">
+                <h3>🎬 Recent Videos</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Title</th>
+                            <th>Music Channel</th>
+                            <th>Views</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="videosTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let creatorsChart = null;
+        let viewsChart = null;
+
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                document.getElementById('loading').textContent = 'Error loading data. Retrying...';
+                setTimeout(fetchDashboardData, 5000);
+            }
+        }
+
+        function updateDashboard(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            // Update stats
+            document.getElementById('totalVideos').textContent = data.stats.total_videos;
+            document.getElementById('subscribers').textContent = data.stats.subscribers.toLocaleString();
+            document.getElementById('totalViews').textContent = data.stats.total_views.toLocaleString();
+            document.getElementById('avgViews').textContent = data.stats.avg_views_per_video.toLocaleString();
+            document.getElementById('videosToday').textContent = data.stats.videos_today;
+            document.getElementById('videosWeek').textContent = data.stats.videos_this_week;
+            document.getElementById('videosMonth').textContent = data.stats.videos_this_month;
+            document.getElementById('successRate').textContent = '100%';
+            document.getElementById('lastUpdated').textContent = `Last updated: ${data.last_updated}`;
+
+            // Update creators chart
+            if (creatorsChart) creatorsChart.destroy();
+            const creatorsCtx = document.getElementById('creatorsChart').getContext('2d');
+            creatorsChart = new Chart(creatorsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.top_creators.map(c => c.name),
+                    datasets: [{
+                        data: data.top_creators.map(c => c.count),
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#4facfe',
+                            '#43e97b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Update views chart
+            const topVideos = data.videos.sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+            if (viewsChart) viewsChart.destroy();
+            const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+            viewsChart = new Chart(viewsCtx, {
+                type: 'bar',
+                data: {
+                    labels: topVideos.map(v => v.youtube_title?.substring(0, 30) + '...'),
+                    datasets: [{
+                        label: 'Views',
+                        data: topVideos.map(v => v.views || 0),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Update videos table
+            const tableBody = document.getElementById('videosTable');
+            tableBody.innerHTML = '';
+            data.videos.reverse().forEach(video => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${video.timestamp?.split(' ')[0] || 'N/A'}</td>
+                    <td>${video.youtube_title || 'Untitled'}</td>
+                    <td>${video.music_creator || 'Unknown'}</td>
+                    <td>${(video.views || 0).toLocaleString()}</td>
+                    <td><a href="${video.youtube_url}" target="_blank" class="video-link">View</a></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Initial load
+        fetchDashboardData();
+
+        // Auto-refresh every 5 minutes
+        setInterval(fetchDashboardData, 300000);
+    </script>
+</body>
+</html>
